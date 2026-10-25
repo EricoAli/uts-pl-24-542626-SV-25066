@@ -1,0 +1,15 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+vendor
+node_modules
+npm-debug.log
+yarn-error.log
+storage/*.key
+database/*.sqlite
+database/*.sqlite-journal
+.phpunit.result.cache
+Dockerfile
+.dockerignore
