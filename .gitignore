@@ -1,0 +1,28 @@
+# Environment files
+.env
+.env.backup
+.env.production
+!.env.example
+
+# Dependencies
+/backend/vendor/
+/frontend/node_modules/
+/frontend/dist/
+
+# SQLite databases
+/backend/database/*.sqlite
+/backend/database/*.sqlite-journal
+
+# Logs and caches
+/backend/storage/*.key
+/backend/storage/logs/
+/backend/storage/framework/cache/
+/backend/storage/framework/sessions/
+/backend/storage/framework/views/
+.phpunit.result.cache
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
