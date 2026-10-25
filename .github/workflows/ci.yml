@@ -21,6 +21,9 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
+    env:
+      APP_KEY: ${{ secrets.APP_KEY }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -29,40 +32,32 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, sqlite3, zip, bcmath, curl
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, fileinfo
           coverage: none
 
-      - name: Copy Environment & Prepare SQLite Database
+      - name: Prepare SQLite Database & Environment File
         run: |
           cp .env.example .env
           mkdir -p database
           touch database/database.sqlite
 
       - name: Install Composer Dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist --ignore-platform-reqs
 
       - name: Ensure Application Key
-        env:
-          APP_KEY_SECRET: ${{ secrets.APP_KEY }}
-          DB_PASSWORD_SECRET: ${{ secrets.DB_PASSWORD }}
         run: |
-          if [ -n "$APP_KEY_SECRET" ]; then
-            echo "Using APP_KEY from repository secrets..."
-            sed -i "s|^APP_KEY=.*|APP_KEY=$APP_KEY_SECRET|" .env
-            echo "APP_KEY=$APP_KEY_SECRET" >> "$GITHUB_ENV"
-          else
-            echo "APP_KEY secret not found, generating valid application key..."
+          if [ -z "$APP_KEY" ]; then
+            echo "APP_KEY secret not found, generating application key..."
             php artisan key:generate --force
             GENERATED_KEY=$(grep '^APP_KEY=' .env | cut -d '=' -f 2-)
             echo "APP_KEY=$GENERATED_KEY" >> "$GITHUB_ENV"
-          fi
-
-          if [ -n "$DB_PASSWORD_SECRET" ]; then
-            echo "DB_PASSWORD=$DB_PASSWORD_SECRET" >> "$GITHUB_ENV"
+          else
+            echo "Using APP_KEY from repository secrets..."
+            sed -i "s|^APP_KEY=.*|APP_KEY=$APP_KEY|" .env
           fi
 
       - name: Run Feature Tests
-        run: php artisan test
+        run: php artisan test --colors=never
 
   build-frontend:
     name: Frontend Build
