@@ -32,7 +32,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, bcmath, fileinfo
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite3, pdo_sqlite, bcmath, fileinfo, openssl, json
           coverage: none
 
       - name: Prepare SQLite Database & Environment File
@@ -57,7 +57,16 @@ jobs:
           fi
 
       - name: Run Feature Tests
-        run: php artisan test --colors=never
+        run: |
+          php artisan test --colors=never --display-errors --display-warnings --display-deprecations 2>&1 | tee test_results.log || {
+            ERROR_MSG=$(tail -n 25 test_results.log | tr '\n' ' ' | sed 's/"/\\"/g')
+            echo "::error title=PHPUnit Failure::$ERROR_MSG"
+            echo "## ❌ Backend Test Failure" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat test_results.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
 
   build-frontend:
     name: Frontend Build
