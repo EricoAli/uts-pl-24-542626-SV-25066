@@ -27,3 +27,13 @@ node_modules/
 .idea/
 .DS_Store
 Thumbs.db
+
+# LaTeX build artifacts
+laporan_p10.aux
+laporan_p10.log
+laporan_p10.out
+laporan_p10.toc
+laporan_p10.fdb_latexmk
+laporan_p10.fls
+laporan_p10.synctex.gz
+
