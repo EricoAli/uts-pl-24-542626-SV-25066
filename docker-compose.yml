@@ -1,3 +1,9 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   # ==========================================
   # Database Service (MySQL 8.0)
@@ -21,6 +27,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+    logging: *default-logging
 
   # ==========================================
   # Backend Service (Laravel + FrankenPHP)
@@ -42,6 +49,11 @@ services:
       APP_KEY: ${APP_KEY}
       APP_DEBUG: ${APP_DEBUG:-false}
       APP_URL: ${APP_URL:-http://localhost:8080}
+      LOG_CHANNEL: ${LOG_CHANNEL:-stdout}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      CACHE_STORE: ${CACHE_STORE:-file}
+      SESSION_DRIVER: ${SESSION_DRIVER:-file}
+      DB_TIMEOUT: ${DB_TIMEOUT:-2}
       DB_CONNECTION: mysql
       DB_HOST: db
       DB_PORT: 3306
@@ -49,11 +61,12 @@ services:
       DB_USERNAME: ${DB_USERNAME:-pos_user}
       DB_PASSWORD: ${DB_PASSWORD:-pos_password}
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/up || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
       start_period: 10s
+    logging: *default-logging
     networks:
       - pos_network
 
@@ -72,6 +85,7 @@ services:
       - backend
     ports:
       - "${FRONTEND_PORT:-8080}:80"
+    logging: *default-logging
     networks:
       - pos_network
 

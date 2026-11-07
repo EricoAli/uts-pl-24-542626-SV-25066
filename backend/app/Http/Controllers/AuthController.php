@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -22,12 +23,26 @@ class AuthController extends Controller
         $user = User::where('email', $validated['email'])->first();
 
         if (! $user || ! Hash::check($validated['password'], $user->password)) {
+            Log::warning('Authentication failed: Invalid credentials', [
+                'actor' => 'unauthenticated_client',
+                'ip_address' => $request->ip(),
+                'action' => 'user_login_attempt',
+                'reason' => 'Provided credentials do not match registered records',
+            ]);
+
             return response()->json([
                 'message' => 'The provided credentials do not match our records.',
             ], 401);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        Log::info('User authenticated successfully', [
+            'actor' => $user->id,
+            'ip_address' => $request->ip(),
+            'action' => 'user_login',
+            'reason' => 'Valid credentials provided; authentication token issued',
+        ]);
 
         return response()->json([
             'message' => 'Login successful',
@@ -46,7 +61,15 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
+        $userId = $request->user()?->id;
         $request->user()->currentAccessToken()->delete();
+
+        Log::info('User logged out successfully', [
+            'actor' => $userId,
+            'ip_address' => $request->ip(),
+            'action' => 'user_logout',
+            'reason' => 'User revoked current access token',
+        ]);
 
         return response()->json([
             'message' => 'Logged out successfully',
